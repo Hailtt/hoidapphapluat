@@ -1,0 +1,7 @@
+POST http://localhost:4000/legal-chat/legalchatbot
+Content-Type: application/json
+
+{
+    "request_id":"HellWorld",
+    "question":"Định nghĩa người bệnh?"
+}

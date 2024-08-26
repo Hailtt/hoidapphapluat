@@ -1,0 +1,33 @@
+
+
+GET http://localhost:5000/botchatv1/conver/getConver?u=US0001
+Authorization: Bear eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiaWF0IjoxNzI0MTMxMzM3LCJleHAiOjE3MjQxMzEzOTd9.KCApMn8Veo1YsC9RnsZBdoTmRDxPsSAN3rlbL7XfDFU
+
+
+###
+POST http://localhost:3000/mockapi/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "admin"
+}
+
+
+
+
+/// CONVERSATION
+###
+GET http://localhost:5000/botchatv1/conver/getConver?u=US0011
+
+###
+POST http://localhost:5000/botchatv1/conver/create?u=US0011
+Content-Type: application/json
+
+{
+    "title": "Xin chao trong tieng viet",
+    "sendtime": "2024-10-11"
+}
+
+###
+DELETE  http://localhost:5000/botchatv1/conver/delete/CV0001
