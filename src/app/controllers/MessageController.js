@@ -39,7 +39,7 @@ class messagesContreller {
       );
 
       const response = await axios.post(
-        "http://localhost:4000/legal-chat/legalchatbot",
+        "https://mock-botchat-ai.onrender.com/legal-chat/legalchatbot",
 
         {
           request_id: user_id,
