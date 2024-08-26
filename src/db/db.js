@@ -9,3 +9,5 @@ pool.connect((err) => {
   if (err) throw err;
   console.log("Connect to PostgresSQL Successfully!");
 });
+
+module.exports = pool;
