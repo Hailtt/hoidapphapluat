@@ -2,7 +2,25 @@ const pool = require("../../db/db");
 
 class converController {
   //[GET]
-  async Get(req, res) {
+  async getOne(req, res) {
+    try {
+      const id = req.query.c;
+
+      const query = await pool.query(
+        "SELECT * FROM conversations WHERE conver_id = $1",
+        [id]
+      );
+
+      console.log(query.rows);
+      res.json({ data: query.rows });
+    } catch (err) {
+      console.log(err);
+      res.json({ message: err.message });
+    }
+  }
+
+  //[GET]
+  async getAll(req, res) {
     try {
       const id = req.query.u;
 
@@ -22,15 +40,34 @@ class converController {
   async create(req, res) {
     try {
       const id = req.query.u;
-      const { title, sendtime } = req.body;
+      const { title } = req.body;
 
-      const user = await pool.query(
-        "INSERT INTO Conversations (user_id, title, sendtime) VALUES ($1, $2, $3)",
-        [id, title, sendtime]
+      const query = await pool.query(
+        "INSERT INTO Conversations (user_id, title) VALUES ($1, $2)",
+        [id, title]
       );
+      res.json({
+        message: "Create new conversation successfully !",
+      });
+    } catch (err) {
+      console.log(err);
+      res.json({ message: err.message });
+    }
+  }
 
-      console.log("Da tao moi Conversation");
-      res.json({ message: "Create new conversation successfully !" });
+  //[POST]
+  async update(req, res) {
+    try {
+      const id = req.query.u;
+      const { title } = req.body;
+
+      const query = await pool.query(
+        "UPDATE Conversations SET  title = $1 WHERE conver_id = $2",
+        [title, id]
+      );
+      res.json({
+        message: "Create new conversation successfully !",
+      });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
@@ -40,13 +77,19 @@ class converController {
   //[DELETE]
   async delete(req, res) {
     try {
-      const { id } = req.params;
-      const user = await pool.query(
-        "DELETE FROM conversations WHERE conversations.conver_id = $1",
+      const id = req.query.c;
+      const deleteMessage = await pool.query(
+        "DELETE FROM messages WHERE conver_id = $1",
         [id]
       );
-      console.log("Da xoa thanh cong");
-      res.json({ message: "Delete new conversation successfully !" });
+
+      const query = await pool.query(
+        "DELETE FROM conversations WHERE conver_id = $1",
+        [id]
+      );
+      if (query.rowCount > 0)
+        res.json({ message: "Delete new conversation successfully !" });
+      else res.json({ message: "Xóa không thành công!" });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });

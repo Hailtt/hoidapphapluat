@@ -2,17 +2,20 @@ const pool = require("../../db/db");
 
 class messagesContreller {
   //[GET]
-  async getAllMess(req, res) {
+  async getAllByConver(req, res) {
     try {
       const conver_id = req.query.c;
       const query = await pool.query(
         `
-            SELECT 
-                m.*
+           SELECT 
+               m.*,
+			   u.username
             FROM 
                 messages m
             INNER JOIN 
                 conversations c ON m.conver_id = c.conver_id
+			INNER JOIN
+				users u on u.user_id = c.user_id
             WHERE 
                  c.conver_id = $1
     `,
@@ -25,7 +28,23 @@ class messagesContreller {
       res.status(500).json({ message: err.message });
     }
   }
+  async create(req, res) {
+    try {
+      const user_id = req.query.u;
+      const conver_id = req.query.c;
+      const { content } = req.body;
+      const query = pool.query(
+        "INSERT INTO Messages (conver_id, user_id, content, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
+        [conver_id, user_id, content]
+      );
 
+      console.log(query);
+      res.json({ message: "Create new message successfully!" });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: err.message });
+    }
+  }
   //[POST]
   async changeLike(req, res) {
     try {
