@@ -1,5 +1,5 @@
 const pool = require("../../db/db");
-
+const axios = require("axios");
 class messagesContreller {
   //[GET]
   async getAllByConver(req, res) {
@@ -38,13 +38,27 @@ class messagesContreller {
         [conver_id, user_id, content]
       );
 
-      console.log(query);
-      res.json({ message: "Create new message successfully!" });
+      const response = await axios.post(
+        "http://localhost:4000/legal-chat/legalchatbot",
+
+        {
+          request_id: user_id,
+          question: content,
+        }
+      );
+      const { answer } = await response.data.data;
+      const queryBot = pool.query(
+        "INSERT INTO Messages (conver_id, user_id, content, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
+        [conver_id, "US0000", answer]
+      );
+
+      res.json({ data: response.data });
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: err.message });
     }
   }
+
   //[POST]
   async changeLike(req, res) {
     try {

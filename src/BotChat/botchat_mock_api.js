@@ -34,7 +34,10 @@ app.post("/legal-chat/legalchatbot", async (req, res) => {
       code: 0,
       mgs: "Successful",
       request_id: request_id,
-      data: DATA_RESPONE,
+      data: {
+        ...DATA_RESPONE,
+        answer: `Câu trả lời cho câu hỏi: ${req.body.question} là:`,
+      },
     };
 
     // Trả về phản hồi
