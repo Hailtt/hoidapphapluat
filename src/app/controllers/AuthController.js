@@ -1,4 +1,5 @@
 const pool = require("../../db/db");
+const Status_respone = require("./constant");
 
 class authController {
   // [GET] get list User
@@ -6,7 +7,9 @@ class authController {
     try {
       const allUsers = await pool.query("SELECT * FROM users");
       console.log(allUsers.rows);
-      res.json(allUsers.rows);
+      if (allUsers.rowCount > 0)
+        res.json({ data: allUsers.rows, message: Status_respone.suscess });
+      else res.json({ data: allUsers.rows, message: Status_respone.notFound });
     } catch (err) {
       console.log(err.message);
       res.json({ message: err.message });
@@ -21,33 +24,44 @@ class authController {
         "SELECT * FROM users WHERE users.user_id = $1",
         [id]
       );
-      console.log(user.rows);
-      res.json(user.rows);
+
+      if (user.rowCount > 0)
+        res.json({ data: user.rows, message: Status_respone.suscess });
+      else res.json({ data: user.rows, message: Status_respone.notFound });
     } catch (err) {
       console.log(err.message);
       res.json({ message: err.message });
     }
   }
 
-  //[POST]
+  //[POST] create new User
   async create(req, res) {
     try {
       const { username, password, phone, email } = req.body;
 
+      if (!username || !password)
+        res.json({
+          message: Status_respone.missing,
+        });
       const query = await pool.query(
         "INSERT INTO Users (username, password, phone, email) VALUES ($1, $2, $3, $4);",
         [username, password, phone || "", email || ""]
       );
-      res.json({
-        message: "Create new User successfully !",
-      });
+      if (query.rowCount > 0)
+        res.json({
+          message: Status_respone.suscess,
+        });
+      else
+        res.json({
+          message: Status_respone.fail,
+        });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
     }
   }
 
-  //[POSS]
+  //[POSS] Edit user information by id
   async update(req, res) {
     try {
       const id = req.query.u;
@@ -56,16 +70,22 @@ class authController {
         "UPDATE Users SET  username = $1, password = $2, phone = $3, email = $4 WHERE users.user_id = $5;",
         [username, password, phone, email, id]
       );
-      res.json({
-        message: "Update User successfully !",
-      });
+      console.log(query);
+      if (query.rowCount > 0)
+        res.json({
+          message: Status_respone.suscess,
+        });
+      else
+        res.json({
+          message: Status_respone.fail,
+        });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
     }
   }
 
-  //[POSS]
+  //[POSS] delete user by id
   async delete(req, res) {
     try {
       const id = req.query.u;
@@ -82,11 +102,11 @@ class authController {
       ]);
       if (query.rowCount > 0)
         res.json({
-          message: "DELETE User successfully !",
+          message: Status_respone.suscess,
         });
       else
         res.json({
-          message: "DELETE User Fail !",
+          message: Status_respone.fail,
         });
     } catch (err) {
       console.log(err);

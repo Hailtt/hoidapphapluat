@@ -1,7 +1,8 @@
 const pool = require("../../db/db");
+const Status_respone = require("./constant");
 
 class converController {
-  //[GET]
+  //[GET] get one conversation by id
   async getOne(req, res) {
     try {
       const id = req.query.c;
@@ -10,16 +11,16 @@ class converController {
         "SELECT * FROM conversations WHERE conver_id = $1",
         [id]
       );
-
-      console.log(query.rows);
-      res.json({ data: query.rows });
+      if (query.rowCount > 0)
+        res.json({ message: Status_respone.suscess, data: query.rows });
+      else res.json({ message: Status_respone.notFound, data: query.rows });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
     }
   }
 
-  //[GET]
+  //[GET] get all conversation by user_id
   async getAll(req, res) {
     try {
       const id = req.query.u;
@@ -28,46 +29,60 @@ class converController {
         "SELECT * FROM conversations c WHERE c.user_id = $1",
         [id]
       );
-      console.log(query.rows);
-      res.json({ data: query.rows });
+
+      if (query.rowCount > 0)
+        res.json({ message: Status_respone.suscess, data: query.rows });
+      else res.json({ message: Status_respone.notFound, data: [] });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
     }
   }
 
-  //[POST]
+  //[POST] create new conversation by user_id
   async create(req, res) {
     try {
       const id = req.query.u;
       const { title } = req.body;
 
       const query = await pool.query(
-        "INSERT INTO Conversations (user_id, title) VALUES ($1, $2)",
+        "INSERT INTO Conversations (user_id, title) VALUES ($1, $2) RETURNING *",
         [id, title]
       );
-      res.json({
-        message: "Create new conversation successfully !",
-      });
+      if (query.rowCount > 0)
+        res.json({
+          message: Status_respone.suscess,
+          conversation: query.rows[0],
+        });
+      else
+        res.json({
+          message: Status_respone.fail,
+        });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
     }
   }
 
-  //[POST]
+  //[POST] edit conversation by id
   async update(req, res) {
     try {
-      const id = req.query.u;
+      const id = req.query.c;
       const { title } = req.body;
 
       const query = await pool.query(
-        "UPDATE Conversations SET  title = $1 WHERE conver_id = $2",
+        "UPDATE Conversations SET  title = $1 WHERE conver_id = $2 RETURNING *",
         [title, id]
       );
-      res.json({
-        message: "Create new conversation successfully !",
-      });
+      if (query.rowCount > 0)
+        res.json({
+          message: Status_respone.suscess,
+          conversation: query.rows[0],
+        });
+      else
+        res.json({
+          message: Status_respone.fail,
+        });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
@@ -82,14 +97,12 @@ class converController {
         "DELETE FROM messages WHERE conver_id = $1",
         [id]
       );
-
       const query = await pool.query(
         "DELETE FROM conversations WHERE conver_id = $1",
         [id]
       );
-      if (query.rowCount > 0)
-        res.json({ message: "Delete new conversation successfully !" });
-      else res.json({ message: "Xóa không thành công!" });
+      if (query.rowCount > 0) res.json({ message: Status_respone.suscess });
+      else res.json({ message: Status_respone.fail });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });

@@ -1,7 +1,9 @@
 const pool = require("../../db/db");
 const axios = require("axios");
+const Status_respone = require("./constant");
+
 class messagesContreller {
-  //[GET]
+  //[GET] get all message in conversation by conver_id
   async getAllByConver(req, res) {
     try {
       const conver_id = req.query.c;
@@ -21,58 +23,42 @@ class messagesContreller {
     `,
         [conver_id]
       );
-      res.json({ data: query.rows });
-      console.log(query.rows);
+      if (query.rowCount > 0)
+        res.json({ message: Status_respone.suscess, data: query.rows });
+      else res.json({ message: Status_respone.notFound, data: query.rows });
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: err.message });
     }
   }
+  //[POST] create new message
   async create(req, res) {
     try {
       const user_id = req.query.u;
       const conver_id = req.query.c;
       const { content } = req.body;
+
+      //save question of user
       const query = pool.query(
         "INSERT INTO Messages (conver_id, user_id, content, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
         [conver_id, user_id, content]
       );
 
-      const response = await axios.post(
-        "https://mock-botchat-ai.onrender.com/legal-chat/legalchatbot",
-
-        {
-          request_id: user_id,
-          question: content,
-        }
-      );
+      //get answer base on user question
+      const response = await axios.post(process.env.BOTCHAT_API, {
+        request_id: user_id,
+        question: content,
+      });
       const { answer } = await response.data.data;
+
+      //save answer into DB with user_id = US0000 is BOT
       const queryBot = pool.query(
         "INSERT INTO Messages (conver_id, user_id, content, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
         [conver_id, "US0000", answer]
       );
-
-      res.json({ data: response.data });
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: err.message });
-    }
-  }
-
-  //[POST]
-  async changeLike(req, res) {
-    try {
-      const { id, isLike } = req.body;
-      const query = await pool.query(
-        `UPDATE messages
-           SET "like" = $2
-           WHERE mes_id = $1`,
-        [id, isLike]
-      );
-      console.log("Message updated successfully");
-      res.json({
-        message: "Message updated successfully",
-      });
+      if (!queryBot) res.json({ message: Status_respone.fail, data: {} });
+      //respone answer
+      res.json({ message: Status_respone.suscess, botchat: response.data });
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: err.message });
