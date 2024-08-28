@@ -11,15 +11,15 @@ class messagesContreller {
         `
            SELECT 
                m.*,
-			   u.username
+			         u.username
             FROM 
                 messages m
             INNER JOIN 
                 conversations c ON m.conver_id = c.conver_id
-			INNER JOIN
-				users u on u.user_id = c.user_id
-            WHERE 
-                 c.conver_id = $1
+            INNER JOIN
+              users u on u.user_id = c.user_id
+                  WHERE 
+                      c.conver_id = $1
     `,
         [conver_id]
       );
