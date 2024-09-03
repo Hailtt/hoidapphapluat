@@ -12,8 +12,13 @@ class converController {
         [id]
       );
       if (query.rowCount > 0)
-        res.json({ message: Status_respone.suscess, data: query.rows });
-      else res.json({ message: Status_respone.notFound, data: query.rows });
+        res
+          .status(200)
+          .json({ message: Status_respone.suscess, data: query.rows });
+      else
+        res
+          .status(200)
+          .json({ message: Status_respone.notFound, data: query.rows });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
@@ -31,8 +36,10 @@ class converController {
       );
 
       if (query.rowCount > 0)
-        res.json({ message: Status_respone.suscess, data: query.rows });
-      else res.json({ message: Status_respone.notFound, data: [] });
+        res
+          .status(200)
+          .json({ message: Status_respone.suscess, data: query.rows });
+      else res.status(200).json({ message: Status_respone.notFound, data: [] });
     } catch (err) {
       console.log(err);
       res.json({ message: err.message });
@@ -50,7 +57,7 @@ class converController {
         [id, title]
       );
       if (query.rowCount > 0)
-        res.json({
+        res.status(200).json({
           message: Status_respone.suscess,
           conversation: query.rows[0],
         });
@@ -98,10 +105,13 @@ class converController {
         [id]
       );
       const query = await pool.query(
-        "DELETE FROM conversations WHERE conver_id = $1",
+        "DELETE FROM conversations WHERE conver_id = $1 RETURNING *",
         [id]
       );
-      if (query.rowCount > 0) res.json({ message: Status_respone.suscess });
+      if (query.rowCount > 0)
+        res
+          .status(200)
+          .json({ message: Status_respone.suscess, data: query.rows[0] });
       else res.json({ message: Status_respone.fail });
     } catch (err) {
       console.log(err);

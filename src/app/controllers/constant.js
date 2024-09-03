@@ -1,5 +1,5 @@
 const Status_respone = {
-  suscess: "Get Successfully!",
+  suscess: "uccessfully!",
   fail: "Fail!",
   notFound: "Not Found!",
   missing: "Missing Something!",

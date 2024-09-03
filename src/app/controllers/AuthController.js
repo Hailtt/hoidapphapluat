@@ -8,8 +8,13 @@ class authController {
       const allUsers = await pool.query("SELECT * FROM users");
       console.log(allUsers.rows);
       if (allUsers.rowCount > 0)
-        res.json({ data: allUsers.rows, message: Status_respone.suscess });
-      else res.json({ data: allUsers.rows, message: Status_respone.notFound });
+        res
+          .status(200)
+          .json({ data: allUsers.rows, message: Status_respone.suscess });
+      else
+        res
+          .status(200)
+          .json({ data: allUsers.rows, message: Status_respone.notFound });
     } catch (err) {
       console.log(err.message);
       res.json({ message: err.message });
@@ -26,8 +31,13 @@ class authController {
       );
 
       if (user.rowCount > 0)
-        res.json({ data: user.rows, message: Status_respone.suscess });
-      else res.json({ data: user.rows, message: Status_respone.notFound });
+        res
+          .status(200)
+          .json({ data: user.rows, message: Status_respone.suscess });
+      else
+        res
+          .status(200)
+          .json({ data: user.rows, message: Status_respone.notFound });
     } catch (err) {
       console.log(err.message);
       res.json({ message: err.message });
@@ -44,12 +54,13 @@ class authController {
           message: Status_respone.missing,
         });
       const query = await pool.query(
-        "INSERT INTO Users (username, password, phone, email) VALUES ($1, $2, $3, $4);",
+        "INSERT INTO Users (username, password, phone, email) VALUES ($1, $2, $3, $4) RETURNING *;",
         [username, password, phone || "", email || ""]
       );
       if (query.rowCount > 0)
-        res.json({
+        res.status(200).json({
           message: Status_respone.suscess,
+          data: query.rows[0],
         });
       else
         res.json({
@@ -65,15 +76,25 @@ class authController {
   async update(req, res) {
     try {
       const id = req.query.u;
-      const { username, password, phone, email } = req.body;
+      const { user_id, username, password, phone, email } = req.body;
+
+      const queryMeesage = await pool.query(
+        "UPDATE messages SET user_id = $1 WHERE messages.user_id = $2 RETURNING *;",
+        [user_id, id]
+      );
+      const queryConver = await pool.query(
+        "UPDATE conversations SET user_id = $1 WHERE conversations.user_id = $2 RETURNING *;",
+        [user_id, id]
+      );
       const query = await pool.query(
-        "UPDATE Users SET  username = $1, password = $2, phone = $3, email = $4 WHERE users.user_id = $5;",
-        [username, password, phone, email, id]
+        "UPDATE users SET  user_id = $6, username = $1, password = $2, phone = $3, email = $4 WHERE users.user_id = $5 RETURNING *;",
+        [username, password, phone, email, id, user_id]
       );
       console.log(query);
       if (query.rowCount > 0)
-        res.json({
+        res.status(200).json({
           message: Status_respone.suscess,
+          data: query.rows[0],
         });
       else
         res.json({
@@ -97,12 +118,14 @@ class authController {
         " DELETE FROM conversations WHERE user_id = $1",
         [id]
       );
-      const query = await pool.query(" DELETE FROM users WHERE user_id = $1", [
-        id,
-      ]);
+      const query = await pool.query(
+        " DELETE FROM users WHERE user_id = $1 RETURNING *",
+        [id]
+      );
       if (query.rowCount > 0)
-        res.json({
+        res.status(200).json({
           message: Status_respone.suscess,
+          data: query.rows[0],
         });
       else
         res.json({
