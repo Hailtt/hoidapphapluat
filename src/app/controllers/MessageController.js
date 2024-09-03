@@ -31,6 +31,7 @@ class messagesContreller {
       res.status(500).json({ message: err.message });
     }
   }
+
   //[POST] create new message
   async create(req, res) {
     try {
@@ -39,9 +40,10 @@ class messagesContreller {
       const { content } = req.body;
 
       //save question of user
-      const query = pool.query(
-        "INSERT INTO Messages (conver_id, user_id, content, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
-        [conver_id, user_id, content]
+      const query = await pool.query(
+        `INSERT INTO Messages (conver_id, user_id, data, platform) VALUES ($1, $2, '{"content": $3, "metadata": {}}', 'SIGNET_MINI_APP');`[
+          (conver_id, user_id, content)
+        ]
       );
 
       //get answer base on user question
@@ -51,10 +53,10 @@ class messagesContreller {
       });
       const { answer } = await response.data.data;
 
-      //save answer into DB with user_id = US0000 is BOT
-      const queryBot = pool.query(
-        "INSERT INTO Messages (conver_id, user_id, content, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
-        [conver_id, "US0000", answer]
+      //save answer into DB with user_id = US0000000001 is BOT
+      const queryBot = await pool.query(
+        "INSERT INTO Messages (conver_id, user_id, data, platform) VALUES ($1, $2, $3, 'SIGNET_MINI_APP');",
+        [conver_id, "US0000000001", answer]
       );
       if (!queryBot) res.json({ message: Status_respone.fail, data: {} });
       //respone answer
