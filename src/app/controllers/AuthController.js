@@ -1,22 +1,27 @@
 const pool = require("../../db/db");
+const authServices = require("../../services/authServices");
+const ConverServices = require("../../services/ConverServices");
+const MessageServices = require("../../services/MessageServices");
 const Status_respone = require("./constant");
 
 class authController {
   // [GET] get list User
-  async getlists(req, res) {
+  async getAll(req, res) {
     try {
-      const allUsers = await pool.query("SELECT * FROM users");
-      console.log(allUsers.rows);
-      if (allUsers.rowCount > 0)
+      const query = await authServices.selectAllUser();
+      if (query.rowCount > 0) {
+        console.log(`Found ${query.rowCount} User!`);
         res
           .status(200)
-          .json({ data: allUsers.rows, message: Status_respone.suscess });
-      else
+          .json({ data: query.rows, message: Status_respone.suscess });
+      } else {
+        console.log(`Found ${query.rowCount} User!`);
         res
           .status(200)
-          .json({ data: allUsers.rows, message: Status_respone.notFound });
+          .json({ data: query.rows, message: Status_respone.notFound });
+      }
     } catch (err) {
-      console.log(err.message);
+      console.error(`Err AuthController get all `, err);
       res.json({ message: err.message });
     }
   }
@@ -25,21 +30,21 @@ class authController {
   async getOne(req, res) {
     try {
       const id = req.query.u;
-      const user = await pool.query(
-        "SELECT * FROM users WHERE users.user_id = $1",
-        [id]
-      );
+      const query = await authServices.selectOneUser(id);
 
-      if (user.rowCount > 0)
+      if (query.rowCount > 0) {
+        console.log(`Found ${query.rowCount} User!`);
         res
           .status(200)
-          .json({ data: user.rows, message: Status_respone.suscess });
-      else
+          .json({ data: query.rows, message: Status_respone.suscess });
+      } else {
+        console.log(`Found ${query.rowCount} User!`);
         res
           .status(200)
-          .json({ data: user.rows, message: Status_respone.notFound });
+          .json({ data: query.rows, message: Status_respone.notFound });
+      }
     } catch (err) {
-      console.log(err.message);
+      console.error(`Err AuthController get one `, err);
       res.json({ message: err.message });
     }
   }
@@ -48,26 +53,32 @@ class authController {
   async create(req, res) {
     try {
       const { username, password, phone, email } = req.body;
-
       if (!username || !password)
         res.json({
           message: Status_respone.missing,
         });
-      const query = await pool.query(
-        "INSERT INTO Users (username, password, phone, email) VALUES ($1, $2, $3, $4) RETURNING *;",
-        [username, password, phone || "", email || ""]
+
+      const query = await authServices.insert(
+        username,
+        password,
+        phone || "",
+        email || ""
       );
-      if (query.rowCount > 0)
+
+      if (query.rowCount > 0) {
+        console.log(`Inserted ${query.rowCount} User!`);
         res.status(200).json({
           message: Status_respone.suscess,
           data: query.rows[0],
         });
-      else
+      } else {
+        console.error(`Error UserController create!`);
         res.json({
           message: Status_respone.fail,
         });
+      }
     } catch (err) {
-      console.log(err);
+      console.error(`Error UserController create! `, err);
       res.json({ message: err.message });
     }
   }
@@ -76,32 +87,30 @@ class authController {
   async update(req, res) {
     try {
       const id = req.query.u;
-      const { user_id, username, password, phone, email } = req.body;
+      const { username, password, phone, email } = req.body;
 
-      const queryMeesage = await pool.query(
-        "UPDATE messages SET user_id = $1 WHERE messages.user_id = $2 RETURNING *;",
-        [user_id, id]
+      const query = await authServices.update(
+        username,
+        password,
+        phone,
+        email,
+        id
       );
-      const queryConver = await pool.query(
-        "UPDATE conversations SET user_id = $1 WHERE conversations.user_id = $2 RETURNING *;",
-        [user_id, id]
-      );
-      const query = await pool.query(
-        "UPDATE users SET  user_id = $6, username = $1, password = $2, phone = $3, email = $4 WHERE users.user_id = $5 RETURNING *;",
-        [username, password, phone, email, id, user_id]
-      );
-      console.log(query);
-      if (query.rowCount > 0)
+
+      if (query.rowCount > 0) {
+        console.log(`UPDATED ${query.rowCount} User at user_id: ${id}`);
         res.status(200).json({
           message: Status_respone.suscess,
           data: query.rows[0],
         });
-      else
+      } else {
+        console.error(`ERROR UPDATED User at user_id: ${id}`);
         res.json({
           message: Status_respone.fail,
         });
+      }
     } catch (err) {
-      console.log(err);
+      console.error(`ERROR UPDATED User`, err);
       res.json({ message: err.message });
     }
   }
@@ -110,29 +119,32 @@ class authController {
   async delete(req, res) {
     try {
       const id = req.query.u;
-      const deleteMessage = pool.query(
-        " DELETE FROM messages WHERE user_id = $1",
-        [id]
+      const deleteMessage = await MessageServices.deleteByUserId(id);
+      const deleteConver = await ConverServices.deleteByUserId(id);
+      const query = await authServices.delete(id);
+
+      console.log(
+        `Deleted ${deleteMessage.rowCount} message at user_id: ${id}`
       );
-      const deleteConver = pool.query(
-        " DELETE FROM conversations WHERE user_id = $1",
-        [id]
+      console.log(
+        `Deleted ${deleteConver.rowCount} conversation at user_id: ${id}`
       );
-      const query = await pool.query(
-        " DELETE FROM users WHERE user_id = $1 RETURNING *",
-        [id]
-      );
-      if (query.rowCount > 0)
+
+      if (query.rowCount > 0) {
+        console.log(`Deleted ${query.rowCount} User`);
         res.status(200).json({
           message: Status_respone.suscess,
           data: query.rows[0],
         });
-      else
+      } else {
+        console.log(`ERROR Deleted ${query.rowCount} User`);
         res.json({
           message: Status_respone.fail,
         });
+      }
     } catch (err) {
-      console.log(err);
+      console.error(`ERROR DELETE User`, err);
+
       res.json({ message: err.message });
     }
   }

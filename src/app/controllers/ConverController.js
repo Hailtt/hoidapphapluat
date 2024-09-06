@@ -1,4 +1,6 @@
 const pool = require("../../db/db");
+const conversationService = require("../../services/ConverServices");
+const messageServices = require("../../services/MessageServices");
 const Status_respone = require("./constant");
 
 class converController {
@@ -6,21 +8,22 @@ class converController {
   async getOne(req, res) {
     try {
       const id = req.query.c;
+      const query = await conversationService.selectOneConverByConverId(id);
 
-      const query = await pool.query(
-        "SELECT * FROM conversations WHERE conver_id = $1",
-        [id]
-      );
-      if (query.rowCount > 0)
+      //handle respone
+      if (query.rowCount > 0) {
+        console.log(`Found ${query.rowCount} conversation by Conver_id: ${id}`);
         res
           .status(200)
           .json({ message: Status_respone.suscess, data: query.rows });
-      else
+      } else {
+        console.log(`Found ${query.rowCount} conversation by Conver_id: ${id}`);
         res
           .status(200)
           .json({ message: Status_respone.notFound, data: query.rows });
+      }
     } catch (err) {
-      console.log(err);
+      console.error("Error converController Get one conversation:", err);
       res.json({ message: err.message });
     }
   }
@@ -30,19 +33,21 @@ class converController {
     try {
       const id = req.query.u;
 
-      const query = await pool.query(
-        "SELECT * FROM conversations c WHERE c.user_id = $1",
-        [id]
-      );
+      const query = await conversationService.selectAllConverByUserId(id);
 
-      if (query.rowCount > 0)
+      //handle respone
+      if (query.rowCount > 0) {
+        console.log(`Found ${query.rowCount} conversation by User_id: ${id}`);
         res
           .status(200)
           .json({ message: Status_respone.suscess, data: query.rows });
-      else res.status(200).json({ message: Status_respone.notFound, data: [] });
+      } else {
+        console.log(`Found ${query.rowCount} conversation by User_id: ${id}`);
+        res.status(200).json({ message: Status_respone.notFound, data: [] });
+      }
     } catch (err) {
-      console.log(err);
-      res.json({ message: err.message });
+      console.error("Error converController Get all conversation:", err);
+      res.status(500).json({ message: err.message });
     }
   }
 
@@ -51,23 +56,24 @@ class converController {
     try {
       const id = req.query.u;
       const { title } = req.body;
+      const query = await conversationService.insert(id, title);
 
-      const query = await pool.query(
-        "INSERT INTO Conversations (user_id, title) VALUES ($1, $2) RETURNING *",
-        [id, title]
-      );
-      if (query.rowCount > 0)
+      //handle respone
+      if (query.rowCount > 0) {
+        console.log(`Insert ${query.rowCount} new conversation!`);
         res.status(200).json({
           message: Status_respone.suscess,
           conversation: query.rows[0],
         });
-      else
+      } else {
+        console.error(`Error converController create new conversation!`, err);
         res.json({
           message: Status_respone.fail,
         });
+      }
     } catch (err) {
       console.log(err);
-      res.json({ message: err.message });
+      res.status(500).json({ message: err.message });
     }
   }
 
@@ -76,23 +82,27 @@ class converController {
     try {
       const id = req.query.c;
       const { title } = req.body;
+      const query = await conversationService.update(id, title);
 
-      const query = await pool.query(
-        "UPDATE Conversations SET  title = $1 WHERE conver_id = $2 RETURNING *",
-        [title, id]
-      );
-      if (query.rowCount > 0)
+      //handle respone
+      if (query.rowCount > 0) {
+        console.log(
+          `Update ${query.rowCount} conversation! by conver_id = ${id}`,
+          err
+        );
         res.json({
           message: Status_respone.suscess,
           conversation: query.rows[0],
         });
-      else
+      } else {
+        console.error(`Error converController Update conversation!`);
         res.json({
           message: Status_respone.fail,
         });
+      }
     } catch (err) {
-      console.log(err);
-      res.json({ message: err.message });
+      console.error(`Error converController Update conversation!`, err);
+      res.status(500).json({ message: err.message });
     }
   }
 
@@ -100,21 +110,29 @@ class converController {
   async delete(req, res) {
     try {
       const id = req.query.c;
-      const deleteMessage = await pool.query(
-        "DELETE FROM messages WHERE conver_id = $1",
-        [id]
+      const deleteMessage = await messageServices.deleteByConverId(id);
+
+      //handle respone
+      console.log(
+        `Deleted ${deleteMessage.rowCount} mesasge in conver_id: ${id}`
       );
-      const query = await pool.query(
-        "DELETE FROM conversations WHERE conver_id = $1 RETURNING *",
-        [id]
-      );
-      if (query.rowCount > 0)
+
+      const query = await conversationService.delete(id);
+
+      //handle respone
+      if (query.rowCount > 0) {
+        console.log(
+          `Deleted ${query.rowCount} conversation in conver_id: ${id}`
+        );
         res
           .status(200)
           .json({ message: Status_respone.suscess, data: query.rows[0] });
-      else res.json({ message: Status_respone.fail });
+      } else {
+        console.error(`Error delete conversation converController`);
+        res.status(500).json({ message: Status_respone.fail });
+      }
     } catch (err) {
-      console.log(err);
+      console.error(`Error delete conversation converController,`, err);
       res.json({ message: err.message });
     }
   }
